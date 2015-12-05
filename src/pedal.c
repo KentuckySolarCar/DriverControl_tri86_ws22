@@ -51,6 +51,7 @@ command_variables	command;
 void process_pedal( unsigned int analog_a, unsigned int analog_b, unsigned int analog_c, unsigned char request_regen )
 {
 	float pedal, regen, rpm;
+	float pedalFactor = 1.5671e-11;
 	
 	// Error Flag updates
 	// Pedal too low
@@ -77,7 +78,13 @@ void process_pedal( unsigned int analog_a, unsigned int analog_b, unsigned int a
 		if (analog_a > PEDAL_TRAVEL_MIN) pedal = (analog_a - PEDAL_TRAVEL_MIN);
 		else pedal = 0.0;
 		// Scale pedal input to produce target motor current
-		pedal = pedal * CURRENT_MAX / PEDAL_TRAVEL;
+		//pedal = pedal * CURRENT_MAX / PEDAL_TRAVEL;
+		
+		//UK solar car addition
+		//output = ( (1 - factor) x input3 ) + ( factor x input ) //we don;t need the +- aspect of the equation.
+        //Reference https://www.physicsforums.com/threads/equation-required-to-calculate-exponential-rate.524002/
+		pedal = (pedal * pedal * pedal) * pedalFactor;
+		
 		// Check limits and clip upper travel region
 		if (pedal > CURRENT_MAX) pedal = CURRENT_MAX;
 
