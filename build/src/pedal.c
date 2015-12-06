@@ -51,7 +51,7 @@ command_variables	command;
 void process_pedal( unsigned int analog_a, unsigned int analog_b, unsigned int analog_c, unsigned char request_regen )
 {
 	float pedal, regen, rpm;
-	float pedalFactor = 1.5671e-11;
+	float pedalFactor = 1.5671e-11, regenFactor = 6.5822e-8;
 	
 	// Error Flag updates
 	// Pedal too low
@@ -85,6 +85,12 @@ void process_pedal( unsigned int analog_a, unsigned int analog_b, unsigned int a
         //Reference https://www.physicsforums.com/threads/equation-required-to-calculate-exponential-rate.524002/
 		pedal = (pedal * pedal * pedal) * pedalFactor;
 		
+		//CURRENT_MAX is a value between zero and one ( 0 < CURRENT_MAX < 1)
+		//pedal will be a value between (0 and 3195)
+		//pedal.max ^3 = 3195 ^ 3 = 32614639875 
+		///1 / (pedal.max ^3) = 1/32614639875 = 3.06610775e-11
+		
+		
 		// Check limits and clip upper travel region
 		if (pedal > CURRENT_MAX) pedal = CURRENT_MAX;
 
@@ -106,12 +112,20 @@ void process_pedal( unsigned int analog_a, unsigned int analog_b, unsigned int a
 		// Check direction and scale appropriately
 		if (command.state == MODE_R)
 		{
+			//regen in revers, (original)
 			rpm = rpm * RPM_REV_MAX / REGEN_TRAVEL;
 			if (rpm < RPM_REV_MAX) rpm = RPM_REV_MAX;
 		}
 		else
 		{
-			rpm = rpm * RPM_FWD_MAX / REGEN_TRAVEL;
+			//rpm = rpm * RPM_FWD_MAX / REGEN_TRAVEL;	
+			//UK solar car addition
+			rpm = rpm * rpm * rpm * regenFactor;
+			//rpm.in 3996
+			//RPM_FWD_MAX	4200
+			//out = in^3 * scale  ;   4200 = 3996^3 * scale
+			//scale = 6.58222694e-8
+			
 			if (rpm > RPM_FWD_MAX) rpm = RPM_FWD_MAX;
 		}
 		regen = 0.0;

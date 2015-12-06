@@ -1,0 +1,2 @@
+src/pedal.c: In function `process_pedal':
+src/pedal.c:54: warning: unused variable `regenFactor'

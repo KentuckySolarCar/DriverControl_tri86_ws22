@@ -1787,7 +1787,7 @@ Disassembly of section .text:
     8efe:	1f 42 c4 12 	mov	&0x12c4,r15	
     8f02:	8f 4d 02 00 	mov	r13,	2(r15)	;0x0002(r15)
     8f06:	bf 42 00 00 	mov	#8,	0(r15)	;r2 As==11, 0x0000(r15)
-    8f0a:	bf 40 a4 00 	mov	#164,	4(r15)	;#0x00a4, 0x0004(r15)
+    8f0a:	bf 40 a6 00 	mov	#166,	4(r15)	;#0x00a6, 0x0004(r15)
     8f0e:	04 00 
     8f10:	df 42 f6 12 	mov.b	&0x12f6,6(r15)	;0x0006(r15)
     8f14:	06 00 
@@ -2828,7 +2828,7 @@ Disassembly of section .text:
     9ae6:	13 24       	jz	$+40     	;abs 0x9b0e
     9ae8:	95 3f       	jmp	$-212    	;abs 0x9a14
     9aea:	1f 42 c4 12 	mov	&0x12c4,r15	
-    9aee:	bf 40 a4 00 	mov	#164,	8(r15)	;#0x00a4, 0x0008(r15)
+    9aee:	bf 40 a6 00 	mov	#166,	8(r15)	;#0x00a6, 0x0008(r15)
     9af2:	08 00 
     9af4:	8f 43 0a 00 	mov	#0,	10(r15)	;r3 As==00, 0x000a(r15)
     9af8:	9a 3f       	jmp	$-202    	;abs 0x9a2e

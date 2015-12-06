@@ -1,0 +1,41 @@
+msp430-gcc -mmcu=msp430x247 -O2 -Wall -Wunused -I./include   -c -o src/can.o src/can.c
+msp430-gcc -mmcu=msp430x247 -O2 -Wall -Wunused -I./include   -c -o src/flash.o src/flash.c
+msp430-gcc -mmcu=msp430x247 -O2 -Wall -Wunused -I./include   -c -o src/gauge.o src/gauge.c
+msp430-gcc -mmcu=msp430x247 -O2 -Wall -Wunused -I./include   -c -o src/pedal.o src/pedal.c
+msp430-gcc -mmcu=msp430x247 -O2 -Wall -Wunused -I./include   -c -o src/switch.o src/switch.c
+msp430-gcc -mmcu=msp430x247 -O2 -Wall -Wunused -I./include   -c -o src/tri86.o src/tri86.c
+msp430-gcc -mmcu=msp430x247 -O2 -Wall -Wunused -I./include   -c -o src/usci.o src/usci.c
+msp430-gcc -mmcu=msp430x247 -O2 -Wall -Wunused -I./include   -c -o src/variant.o src/variant.c
+msp430-gcc -mmcu=msp430x247 -Wl,-Map=tri86_oldBL.map -T tri86_oldBL.x -o tri86_oldBL.elf ./src/can.o ./src/flash.o ./src/gauge.o ./src/pedal.o ./src/switch.o ./src/tri86.o ./src/usci.o ./src/variant.o 
+======================================================
+msp430-size tri86_oldBL.elf
+   text	   data	    bss	    dec	    hex	filename
+  10360	     38	    476	  10874	   2a7a	tri86_oldBL.elf
+======================================================
+msp430-objcopy -O ihex tri86_oldBL.elf tri86_oldBL.a43
+msp430-objdump -dSt tri86_oldBL.elf >tri86_oldBL.lst
+msp430-gcc -mmcu=msp430x247 -Wl,-Map=tri86.map -T tri86.x -o tri86.elf ./src/can.o ./src/flash.o ./src/gauge.o ./src/pedal.o ./src/switch.o ./src/tri86.o ./src/usci.o ./src/variant.o 
+======================================================
+msp430-size tri86.elf
+   text	   data	    bss	    dec	    hex	filename
+  10360	     38	    476	  10874	   2a7a	tri86.elf
+======================================================
+msp430-objcopy -O ihex tri86.elf tri86.a43
+msp430-objdump -dSt tri86.elf >tri86.lst
+rm src/can.o src/tri86.o src/gauge.o tri86.elf tri86_oldBL.elf src/pedal.o src/flash.o src/usci.o src/variant.o src/switch.o
+
+C:\Users\John\Desktop\del\hide\DriverControl_tri86_ws22\build>perl errproc_msp430.pl 
+src/pedal.c(54): warning: unused variable `regenFactor'
+	======================================================================
+ 				!!!!WARNING!!!!
+	
+ 	Generating project tsf for public release!!
+ 	Firmware is not secure! Be careful with distribution!
+	
+ 	The public release version of this program
+ 	does not encrypt the code in the tsf!
+	
+    =======================================================================
+	
+
+MSP430encrypt: MSP430F247 detected
