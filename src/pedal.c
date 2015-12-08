@@ -115,7 +115,8 @@ void process_pedal( unsigned int analog_a, unsigned int analog_b, unsigned int a
 		switch(command.state)
 		{
 			case MODE_R:
-				if ( request_regen == FALSE )
+				//if ( request_regen == FALSE )
+				if ( regen <= 0.0 )
 				{
 					command.current = pedal;
 					command.rpm = RPM_REV_MAX;
@@ -130,7 +131,8 @@ void process_pedal( unsigned int analog_a, unsigned int analog_b, unsigned int a
 			case MODE_DH:
 			case MODE_BL:
 			case MODE_BH:
-				if ( request_regen == FALSE )
+				//if ( request_regen == FALSE )
+				if ( regen <= 0.0 )
 				{
 					command.current = pedal;
 					command.rpm = RPM_FWD_MAX;

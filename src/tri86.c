@@ -156,7 +156,8 @@ int main( void )
 			// TODO
 			// Update motor commands based on pedal and slider positions
 #ifdef REGEN_ON_BRAKE
-			process_pedal( ADC12MEM0, ADC12MEM1, ADC12MEM2, (switches & SW_BRAKE) );	// Request regen on brake switch
+			process_pedal( ADC12MEM0, ADC12MEM1, ADC12MEM2, TRUE ); //always request regen, but the last argument no longer matters (DC 12-8-15) 
+			//process_pedal( ADC12MEM0, ADC12MEM1, ADC12MEM2, (switches & SW_BRAKE) );// Request regen on brake switch
 #else
 			process_pedal( ADC12MEM0, ADC12MEM1, ADC12MEM2, FALSE );					// No regen
 #endif			
@@ -167,7 +168,8 @@ int main( void )
 			switch(command.state)
 			{
 				case MODE_OFF:
-					if (switches & SW_IGN_ON) next_state = MODE_N;
+					//(DC 12-8-15) if (switches & SW_IGN_ON) next_state = MODE_N;
+					if (1) next_state = MODE_N;
 					else next_state = MODE_OFF;
 					P5OUT &= ~(LED_GEAR_ALL);
 					break;
@@ -183,9 +185,11 @@ int main( void )
 					else if ( (switches & SW_MODE_D) && ( (EVENT_SLOW_ACTIVE) || (!(EVENT_OVER_VEL_LTOH_ACTIVE) && (EVENT_FORWARD_ACTIVE)) ) ) next_state = MODE_CO_DL;
 					else if ( (switches & SW_MODE_D) && ( ((EVENT_OVER_VEL_HTOL_ACTIVE) && (EVENT_FORWARD_ACTIVE)) ) ) next_state = MODE_CO_DH;
 #endif
-					else if (!(switches & SW_IGN_ON)) next_state = MODE_OFF;
-					else if (switches & SW_FUEL) next_state = MODE_CHARGE;
-					else next_state = MODE_N;
+					//(DC 12-8-15)
+					//else if (!(switches & SW_IGN_ON)) next_state = MODE_OFF;
+					//else if (switches & SW_FUEL) next_state = MODE_CHARGE;
+					//else next_state = MODE_N;
+					else next_state = MODE_R;
 					P5OUT &= ~(LED_GEAR_ALL);
 					P5OUT |= LED_GEAR_3;
 					break;
@@ -200,16 +204,18 @@ int main( void )
 					else if ((command.state == MODE_CO_BH) && (current_egear == EG_STATE_HIGH)) next_state = MODE_BH;
 					else if ((command.state == MODE_CO_DL) && (current_egear == EG_STATE_LOW)) next_state = MODE_DL;
 					else if ((command.state == MODE_CO_DH) && (current_egear == EG_STATE_HIGH)) next_state = MODE_DH;
-					else if (!(switches & SW_IGN_ON)) next_state = MODE_OFF;
-					else if (switches & SW_FUEL) next_state = MODE_CHARGE;
+					//(DC 12-8-15)
+					//else if (!(switches & SW_IGN_ON)) next_state = MODE_OFF;
+					//else if (switches & SW_FUEL) next_state = MODE_CHARGE;
 					else next_state = command.state;
 					break;
 				case MODE_R:
 					if (switches & SW_MODE_N) next_state = MODE_N;
 					else if ((switches & SW_MODE_B) && ((EVENT_SLOW_ACTIVE) || (EVENT_FORWARD_ACTIVE))) next_state = MODE_BL;	// Assume already in low egear
 					else if ((switches & SW_MODE_D) && ((EVENT_SLOW_ACTIVE) || (EVENT_FORWARD_ACTIVE))) next_state = MODE_DL;	// Assume already in low egear
-					else if (!(switches & SW_IGN_ON)) next_state = MODE_OFF;
-					else if (switches & SW_FUEL) next_state = MODE_CHARGE;
+					//(DC 12-8-15)
+					//else if (!(switches & SW_IGN_ON)) next_state = MODE_OFF;
+					//else if (switches & SW_FUEL) next_state = MODE_CHARGE;
 					else next_state = MODE_R;
 					P5OUT &= ~(LED_GEAR_ALL);
 					P5OUT |= LED_GEAR_4;
@@ -221,8 +227,9 @@ int main( void )
 #ifdef USE_EGEAR
 					else if (EVENT_OVER_VEL_LTOH_ACTIVE) next_state = MODE_CO_BH;
 #endif
-					else if (!(switches & SW_IGN_ON)) next_state = MODE_OFF;
-					else if (switches & SW_FUEL) next_state = MODE_CHARGE;
+					//(DC 12-8-15)
+					//else if (!(switches & SW_IGN_ON)) next_state = MODE_OFF;
+					//else if (switches & SW_FUEL) next_state = MODE_CHARGE;
 					else next_state = MODE_BL;
 					P5OUT &= ~(LED_GEAR_ALL);
 					P5OUT |= LED_GEAR_2;
@@ -233,8 +240,9 @@ int main( void )
 #ifdef USE_EGEAR
 					else if (!(EVENT_OVER_VEL_HTOL_ACTIVE)) next_state = MODE_CO_BL;
 #endif
-					else if (!(switches & SW_IGN_ON)) next_state = MODE_OFF;
-					else if (switches & SW_FUEL) next_state = MODE_CHARGE;
+					//(DC 12-8-15)
+					//else if (!(switches & SW_IGN_ON)) next_state = MODE_OFF;
+					//else if (switches & SW_FUEL) next_state = MODE_CHARGE;
 					else next_state = MODE_BH;
 					P5OUT &= ~(LED_GEAR_ALL);
 					P5OUT |= LED_GEAR_2;
@@ -246,8 +254,9 @@ int main( void )
 #ifdef USE_EGEAR
 					else if (EVENT_OVER_VEL_LTOH_ACTIVE) next_state = MODE_CO_DH;
 #endif
-					else if (!(switches & SW_IGN_ON)) next_state = MODE_OFF;
-					else if (switches & SW_FUEL) next_state = MODE_CHARGE;
+					//(DC 12-8-15)
+					//else if (!(switches & SW_IGN_ON)) next_state = MODE_OFF;
+					//else if (switches & SW_FUEL) next_state = MODE_CHARGE;
 					else next_state = MODE_DL;
 					P5OUT &= ~(LED_GEAR_ALL);
 					P5OUT |= LED_GEAR_1;
@@ -258,16 +267,19 @@ int main( void )
 #ifdef USE_EGEAR
 					else if (!(EVENT_OVER_VEL_HTOL_ACTIVE)) next_state = MODE_CO_DL;
 #endif
-					else if (!(switches & SW_IGN_ON)) next_state = MODE_OFF;
-					else if (switches & SW_FUEL) next_state = MODE_CHARGE;
+					//(DC 12-8-15)
+					//else if (!(switches & SW_IGN_ON)) next_state = MODE_OFF;
+					//else if (switches & SW_FUEL) next_state = MODE_CHARGE;
 					else next_state = MODE_DH;
 					P5OUT &= ~(LED_GEAR_ALL);
 					P5OUT |= LED_GEAR_1;
 					break;
 				case MODE_CHARGE:
-					if (!(switches & SW_FUEL)) next_state = MODE_N;
-					else if (!(switches & SW_IGN_ON)) next_state = MODE_OFF;
-					else next_state = MODE_CHARGE;
+					//(DC 12-8-15)
+					//if (!(switches & SW_FUEL)) next_state = MODE_N;
+					//else if (!(switches & SW_IGN_ON)) next_state = MODE_OFF;
+					//else next_state = MODE_CHARGE;
+					next_state = MODE_CHARGE;
 					// Flash N LED in charge mode
 					charge_flash_count--;
 					P5OUT &= ~(LED_GEAR_4 | LED_GEAR_2 | LED_GEAR_1);
@@ -296,7 +308,9 @@ int main( void )
 			else P1OUT &= ~REVERSE_OUT;
 			
 			// Control CAN bus power
-			if ((switches & SW_IGN_ACC) || (switches & SW_IGN_ON) || (switches & SW_FUEL))
+			//(DC 12-8-15) -- we don't want can power to be dependent on anything
+			//if ((switches & SW_IGN_ACC) || (switches & SW_IGN_ON) || (switches & SW_FUEL))
+			if(1)
 			{
 				P1OUT |= CAN_PWR_OUT;
 			}
@@ -307,12 +321,16 @@ int main( void )
 			}
 
 			// Control accelerator pedal sense power
-			if ((switches & SW_IGN_ACC) || (switches & SW_IGN_ON)) P6OUT |= ANLG_V_ENABLE;
-			else P6OUT &= ~ANLG_V_ENABLE;
+			//(DC 12-8-15) -- we always want pedal sense to be enabled
+			//if ((switches & SW_IGN_ACC) || (switches & SW_IGN_ON)) P6OUT |= ANLG_V_ENABLE;
+			P6OUT |= ANLG_V_ENABLE;
+			//else P6OUT &= ~ANLG_V_ENABLE;
 
 			// Control gear switch backlighting
-			if ((switches & SW_IGN_ACC) || (switches & SW_IGN_ON)) P5OUT |= LED_GEAR_BL;
-			else P5OUT &= ~LED_GEAR_BL;
+			//(DC 12-8-15) -- we always want LEDS enabled
+			//if ((switches & SW_IGN_ACC) || (switches & SW_IGN_ON)) 
+			P5OUT |= LED_GEAR_BL;
+			//else P5OUT &= ~LED_GEAR_BL;
 			
 			// Control front panel fault indicator
 			if (switches & (SW_ACCEL_FAULT | SW_CAN_FAULT | SW_BRAKE_FAULT | SW_REV_FAULT)) P3OUT &= ~LED_REDn;
@@ -327,7 +345,9 @@ int main( void )
 			// Blink CAN activity LED
 			EVENT_CAN_ACTIVITY_SET;
 			// Update command state and override pedal commands if necessary
-			if (switches & SW_IGN_ON)
+			//(DC 12-8-15) -- always enable command state update
+			//if (switches & SW_IGN_ON)
+			if(1)
 			{
 				switch (command.state)
 				{

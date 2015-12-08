@@ -1,0 +1,11 @@
+can.o: src/can.c include/tri86.h include/can.h include/usci.h
+flash.o: src/flash.c include/tri86.h include/flash.h
+gauge.o: src/gauge.c include/tri86.h include/gauge.h
+pedal.o: src/pedal.c include/tri86.h include/pedal.h
+switch.o: src/switch.c include/tri86.h include/switch.h
+tri86.o: src/tri86.c include/tri86.h include/can.h include/usci.h \
+  include/pedal.h include/gauge.h include/switch.h include/variant.h \
+  include/buildnum.h include/flash.h
+usci.o: src/usci.c include/tri86.h include/usci.h
+variant.o: src/variant.c include/variant.h include/tri86.h \
+  include/buildnum.h include/can.h include/flash.h
