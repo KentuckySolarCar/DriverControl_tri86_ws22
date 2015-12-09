@@ -39,6 +39,9 @@
 // Public variables
 command_variables	command;
 
+extern float motor_rpm;
+extern float cruise_setpoint;
+
 /**************************************************************************************************
  * PUBLIC FUNCTIONS
  *************************************************************************************************/
@@ -128,9 +131,6 @@ void process_pedal( unsigned int analog_a, unsigned int analog_b, unsigned int a
 				}
 				break;
 			case MODE_DL:
-			case MODE_DH:
-			case MODE_BL:
-			case MODE_BH:
 				//if ( request_regen == FALSE )
 				if ( regen <= 0.0 )
 				{
@@ -143,6 +143,30 @@ void process_pedal( unsigned int analog_a, unsigned int analog_b, unsigned int a
 					command.rpm = 0.0;
 				}
 				break;
+			case MODE_DH:
+			case MODE_BL: //CRUISE
+				if ( regen <= 0.0 )
+				{
+					if( pedal <= 0.1) {
+						if(motor_rpm < cruise_setpoint) {
+							command.current = CURRENT_MAX;
+							command.rpm = cruise_setpoint;
+						} else {
+							command.current = 0.0;
+							command.rpm = cruise_setpoint;
+						}
+					} else {
+						command.current = pedal;
+						command.rpm = RPM_FWD_MAX;
+					}
+				}
+				else
+				{
+					command.current = regen;
+					command.rpm = 0.0;
+				}
+				break;
+			case MODE_BH:
 			case MODE_CHARGE:
 			case MODE_N:
 			case MODE_START:

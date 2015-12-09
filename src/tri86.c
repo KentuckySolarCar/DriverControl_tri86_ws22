@@ -48,6 +48,7 @@ unsigned int can_addr;
 
 // Data from motor controller
 float motor_rpm = 0;
+float cruise_setpoint = 0; //DC 12-9-15
 float motor_temp = 0;
 float controller_temp = 0;
 float battery_voltage = 0;
@@ -167,132 +168,43 @@ int main( void )
 			// Track current operating state
 			switch(command.state)
 			{
-				case MODE_OFF:
-					//(DC 12-8-15) if (switches & SW_IGN_ON) next_state = MODE_N;
-					if (1) next_state = MODE_N;
-					else next_state = MODE_OFF;
+				case MODE_OFF: //START STATE
+					next_state = MODE_DL;
 					P5OUT &= ~(LED_GEAR_ALL);
 					break;
 				case MODE_N:
-#ifndef USE_EGEAR
-					if ((switches & SW_MODE_R) && ((EVENT_SLOW_ACTIVE) || (EVENT_REVERSE_ACTIVE))) next_state = MODE_R;
-					else if ((switches & SW_MODE_B) && ((EVENT_SLOW_ACTIVE) || (EVENT_FORWARD_ACTIVE))) next_state = MODE_BL;
-					else if ((switches & SW_MODE_D) && ((EVENT_SLOW_ACTIVE) || (EVENT_FORWARD_ACTIVE))) next_state = MODE_DL;
-#else
-					if ((switches & SW_MODE_R) && ((EVENT_SLOW_ACTIVE) || (EVENT_REVERSE_ACTIVE))) next_state = MODE_CO_R;
-					else if ( (switches & SW_MODE_B) && ( (EVENT_SLOW_ACTIVE) || (!(EVENT_OVER_VEL_LTOH_ACTIVE) && (EVENT_FORWARD_ACTIVE)) ) ) next_state = MODE_CO_BL;
-					else if ( (switches & SW_MODE_B) && ( ((EVENT_OVER_VEL_HTOL_ACTIVE) && (EVENT_FORWARD_ACTIVE)) ) ) next_state = MODE_CO_BH;
-					else if ( (switches & SW_MODE_D) && ( (EVENT_SLOW_ACTIVE) || (!(EVENT_OVER_VEL_LTOH_ACTIVE) && (EVENT_FORWARD_ACTIVE)) ) ) next_state = MODE_CO_DL;
-					else if ( (switches & SW_MODE_D) && ( ((EVENT_OVER_VEL_HTOL_ACTIVE) && (EVENT_FORWARD_ACTIVE)) ) ) next_state = MODE_CO_DH;
-#endif
-					//(DC 12-8-15)
-					//else if (!(switches & SW_IGN_ON)) next_state = MODE_OFF;
-					//else if (switches & SW_FUEL) next_state = MODE_CHARGE;
-					//else next_state = MODE_N;
-					else next_state = MODE_R;
-					P5OUT &= ~(LED_GEAR_ALL);
-					P5OUT |= LED_GEAR_3;
-					break;
 				case MODE_CO_R:
 				case MODE_CO_BL:
 				case MODE_CO_BH:
 				case MODE_CO_DL:
 				case MODE_CO_DH:
-					if (switches & SW_MODE_N) next_state = MODE_N;
-					else if ((command.state == MODE_CO_R) && (current_egear == EG_STATE_LOW)) next_state = MODE_R;
-					else if ((command.state == MODE_CO_BL) && (current_egear == EG_STATE_LOW)) next_state = MODE_BL;
-					else if ((command.state == MODE_CO_BH) && (current_egear == EG_STATE_HIGH)) next_state = MODE_BH;
-					else if ((command.state == MODE_CO_DL) && (current_egear == EG_STATE_LOW)) next_state = MODE_DL;
-					else if ((command.state == MODE_CO_DH) && (current_egear == EG_STATE_HIGH)) next_state = MODE_DH;
-					//(DC 12-8-15)
-					//else if (!(switches & SW_IGN_ON)) next_state = MODE_OFF;
-					//else if (switches & SW_FUEL) next_state = MODE_CHARGE;
-					else next_state = command.state;
-					break;
-				case MODE_R:
-					if (switches & SW_MODE_N) next_state = MODE_N;
-					else if ((switches & SW_MODE_B) && ((EVENT_SLOW_ACTIVE) || (EVENT_FORWARD_ACTIVE))) next_state = MODE_BL;	// Assume already in low egear
-					else if ((switches & SW_MODE_D) && ((EVENT_SLOW_ACTIVE) || (EVENT_FORWARD_ACTIVE))) next_state = MODE_DL;	// Assume already in low egear
-					//(DC 12-8-15)
-					//else if (!(switches & SW_IGN_ON)) next_state = MODE_OFF;
-					//else if (switches & SW_FUEL) next_state = MODE_CHARGE;
+				case MODE_R: //REVERSE
+					//if ((switches & SW_MODE_B) && ((EVENT_SLOW_ACTIVE) || (EVENT_FORWARD_ACTIVE))) next_state = MODE_BL;	// Assume already in low egear
+					if (!(switches & SW_MODE_R) && ((EVENT_SLOW_ACTIVE) || (EVENT_FORWARD_ACTIVE))) next_state = MODE_DL;	// Assume already in low egear
 					else next_state = MODE_R;
 					P5OUT &= ~(LED_GEAR_ALL);
 					P5OUT |= LED_GEAR_4;
 					break;
-				case MODE_BL:
-					if (switches & SW_MODE_N) next_state = MODE_N;
-					else if ((switches & SW_MODE_R) && ((EVENT_SLOW_ACTIVE) || (EVENT_REVERSE_ACTIVE))) next_state = MODE_R;		// Assume already in low egear
-					else if ((switches & SW_MODE_D) && ((EVENT_SLOW_ACTIVE) || (EVENT_FORWARD_ACTIVE))) next_state = MODE_DL;	// Assume already in low egear
-#ifdef USE_EGEAR
-					else if (EVENT_OVER_VEL_LTOH_ACTIVE) next_state = MODE_CO_BH;
-#endif
-					//(DC 12-8-15)
-					//else if (!(switches & SW_IGN_ON)) next_state = MODE_OFF;
-					//else if (switches & SW_FUEL) next_state = MODE_CHARGE;
+				case MODE_BL: //CRUISE
+					if ((switches & SW_MODE_R) && ((EVENT_SLOW_ACTIVE) || (EVENT_REVERSE_ACTIVE))) next_state = MODE_R;		// Assume already in low egear
+					else if ((switches & SW_BRAKE) && ((EVENT_SLOW_ACTIVE) || (EVENT_FORWARD_ACTIVE))) next_state = MODE_DL;	// Assume already in low egear
 					else next_state = MODE_BL;
 					P5OUT &= ~(LED_GEAR_ALL);
 					P5OUT |= LED_GEAR_2;
 					break;
 				case MODE_BH:
-					if (switches & SW_MODE_N) next_state = MODE_N;
-					else if ((switches & SW_MODE_D) && ((EVENT_SLOW_ACTIVE) || (EVENT_FORWARD_ACTIVE))) next_state = MODE_DH;
-#ifdef USE_EGEAR
-					else if (!(EVENT_OVER_VEL_HTOL_ACTIVE)) next_state = MODE_CO_BL;
-#endif
-					//(DC 12-8-15)
-					//else if (!(switches & SW_IGN_ON)) next_state = MODE_OFF;
-					//else if (switches & SW_FUEL) next_state = MODE_CHARGE;
-					else next_state = MODE_BH;
-					P5OUT &= ~(LED_GEAR_ALL);
-					P5OUT |= LED_GEAR_2;
-					break;
-				case MODE_DL:
-					if (switches & SW_MODE_N) next_state = MODE_N;
-					else if ((switches & SW_MODE_B) && ((EVENT_SLOW_ACTIVE) || (EVENT_FORWARD_ACTIVE))) next_state = MODE_BL;	// Assume already in low egear
+				case MODE_DL: //DRIVE
+					if ((switches & SW_MODE_B) && ((EVENT_SLOW_ACTIVE) || (EVENT_FORWARD_ACTIVE))) {
+						next_state = MODE_BL;	//GOTO CRUISE
+						cruise_setpoint = motor_rpm;
+					}
 					else if ((switches & SW_MODE_R) && ((EVENT_SLOW_ACTIVE) || (EVENT_REVERSE_ACTIVE))) next_state = MODE_R;		// Assume already in low egear
-#ifdef USE_EGEAR
-					else if (EVENT_OVER_VEL_LTOH_ACTIVE) next_state = MODE_CO_DH;
-#endif
-					//(DC 12-8-15)
-					//else if (!(switches & SW_IGN_ON)) next_state = MODE_OFF;
-					//else if (switches & SW_FUEL) next_state = MODE_CHARGE;
 					else next_state = MODE_DL;
 					P5OUT &= ~(LED_GEAR_ALL);
 					P5OUT |= LED_GEAR_1;
 					break;
 				case MODE_DH:
-					if (switches & SW_MODE_N) next_state = MODE_N;
-					else if ((switches & SW_MODE_B) && ((EVENT_SLOW_ACTIVE) || (EVENT_FORWARD_ACTIVE))) next_state = MODE_BH;
-#ifdef USE_EGEAR
-					else if (!(EVENT_OVER_VEL_HTOL_ACTIVE)) next_state = MODE_CO_DL;
-#endif
-					//(DC 12-8-15)
-					//else if (!(switches & SW_IGN_ON)) next_state = MODE_OFF;
-					//else if (switches & SW_FUEL) next_state = MODE_CHARGE;
-					else next_state = MODE_DH;
-					P5OUT &= ~(LED_GEAR_ALL);
-					P5OUT |= LED_GEAR_1;
-					break;
 				case MODE_CHARGE:
-					//(DC 12-8-15)
-					//if (!(switches & SW_FUEL)) next_state = MODE_N;
-					//else if (!(switches & SW_IGN_ON)) next_state = MODE_OFF;
-					//else next_state = MODE_CHARGE;
-					next_state = MODE_CHARGE;
-					// Flash N LED in charge mode
-					charge_flash_count--;
-					P5OUT &= ~(LED_GEAR_4 | LED_GEAR_2 | LED_GEAR_1);
-					if (charge_flash_count == 0)
-					{
-						charge_flash_count = (CHARGE_FLASH_SPEED * 2);
-						P5OUT |= LED_GEAR_3;
-					}
-					else if (charge_flash_count == CHARGE_FLASH_SPEED)
-					{
-						P5OUT &= ~LED_GEAR_3;
-					}
-					break;
 				default:
 					next_state = MODE_OFF;
 					break;
@@ -344,49 +256,6 @@ int main( void )
 			EVENT_COMMS_CLR;
 			// Blink CAN activity LED
 			EVENT_CAN_ACTIVITY_SET;
-			// Update command state and override pedal commands if necessary
-			//(DC 12-8-15) -- always enable command state update
-			//if (switches & SW_IGN_ON)
-			if(1)
-			{
-				switch (command.state)
-				{
-					case MODE_R:
-					case MODE_DL:
-					case MODE_DH:
-					case MODE_BL:
-					case MODE_BH:
-#ifndef REGEN_ON_BRAKE
-#ifdef CUTOUT_ON_BRAKE
-						if (switches & SW_BRAKE)
-						{
-							command.current = 0.0;	
-							command.rpm = 0.0;
-						}
-#endif
-#endif
-						break;
-					case MODE_CHARGE:
-					case MODE_N:
-					case MODE_START:
-					case MODE_OFF:
-					case MODE_ON:
-					case MODE_CO_R:
-					case MODE_CO_DL:
-					case MODE_CO_DH:
-					case MODE_CO_BL:
-					case MODE_CO_BH:
-					default:
-						command.current = 0.0;
-						command.rpm = 0.0;
-						break;
-				}
-			}
-			else
-			{
-				command.current = 0.0;
-				command.rpm = 0.0;
-			}
 
 			// Transmit commands and telemetry
 			if (EVENT_CONNECTED_ACTIVE)

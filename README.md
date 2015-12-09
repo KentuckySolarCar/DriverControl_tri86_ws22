@@ -1,6 +1,30 @@
 # DriverControl_tri86_ws22
 This is the repo for the EV Driver controls box that was ordered along with the Tritium Wavesculptor Motor Controller.
 
+Expected DCB wiring:
+
+	ACCEL M12 Connector:
+	Blue  - (2) Analog A GND
+	Brown - (1) Analog A 5V+
+	Black - (20) Analog A Signal
+	White - N/C
+
+	REGEN M12 Connector:
+	Blue  - (5) Analog C GND
+	Brown - (23) Analog C 5V+
+	Black - (4) Analog C Signal
+	White - N/C
+
+	FWD/REV M12 Connector:
+	Blue  - (30) Gear Select GND
+	Brown - (7)  Brake Switch (Active 12V)
+	Black - (10) Gear Switch 4 (SW_MODE_R Reverse) (Active Low)
+	White - (9)  Gear Switch 2 (SW_MODE_B Cruise Start) (Active Low)
+
+
+
+
+=====================================================================================================================================================
 To set up your environment:
 	1) Follow the directions in the ;readme.txt
 			Use Windows. You will need the linux tools ported to windows (MinGW)
@@ -21,11 +45,14 @@ To program the driver control box:
 	
 	The serial number for our DCB is 4294967295
 	and the default CAN base address is 500
+=====================================================================================================================================================
 
-
 	
 	
-	
+Changes made to firmware on 12-9-15:
+	tri86.c -- simplified state machine to only include OFF,REVERSE,DRIVE,and CRUISE. Implements cruise control. 
+	pedal.c -- changed state machine to implement cruise control functionality
+	wiring: changed fwd/rev input to signal the reverse gear instead of signal to drive gear. Changed wiring for cruise control
 	
 Changes made to firmware on 12-8-15:
 	tri86.h -- defined REGEN_ON_BRAKE to enable regen to work
