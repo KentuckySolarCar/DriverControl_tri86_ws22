@@ -1,2 +1,0 @@
-src/tri86.c: In function `main':
-src/tri86.c:70: warning: unused variable `charge_flash_count'

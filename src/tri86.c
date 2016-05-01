@@ -23,6 +23,7 @@
 // Include files
 #include <msp430x24x.h>
 #include <signal.h>
+//#include <math.h> //DC
 #include "tri86.h"
 #include "can.h"
 #include "usci.h"
@@ -53,9 +54,76 @@ float motor_temp = 0;
 float controller_temp = 0;
 float battery_voltage = 0;
 float battery_current = 0;
+float phase_voltage = 0;
+float phase_current = 0;
 
 //For detecting CAN devices in BL (This is required to ignore another device whilst it is being programmed)
 BOOL inblWS = FALSE;
+
+//nothing to see here.... move along
+unsigned long isqrt(unsigned long ulValue)
+{
+    unsigned long ulRem, ulRoot, ulIdx;
+
+    //
+    // Initialize the remainder and root to zero.
+    //
+    ulRem = 0;
+    ulRoot = 0;
+
+    //
+    // Loop over the sixteen bits in the root.
+    //
+    for(ulIdx = 0; ulIdx < 16; ulIdx++)
+    {
+        //
+        // Shift the root up by a bit to make room for the new bit that is
+        // about to be computed.
+        //
+        ulRoot <<= 1;
+
+        //
+        // Get two more bits from the input into the remainder.
+        //
+        ulRem = ((ulRem << 2) + (ulValue >> 30));
+        ulValue <<= 2;
+
+        //
+        // Make the test root be 2n + 1.
+        //
+        ulRoot++;
+
+        //
+        // See if the root is greater than the remainder.
+        //
+        if(ulRoot <= ulRem)
+        {
+            //
+            // Subtract the test root from the remainder.
+            //
+            ulRem -= ulRoot;
+
+            //
+            // Increment the root, setting the second LSB.
+            //
+            ulRoot++;
+        }
+        else
+        {
+            //
+            // The root is greater than the remainder, so the new bit of the
+            // root is actually zero.
+            //
+            ulRoot--;
+        }
+    }
+
+    //
+    // Return the computed root.
+    //
+    return(ulRoot >> 1);
+}
+
 
 // Main routine
 int main( void )
@@ -67,7 +135,7 @@ int main( void )
 	// Comms
 	unsigned int comms_event_count = 0;
 	// LED flashing
-	unsigned char charge_flash_count = CHARGE_FLASH_SPEED;
+	//unsigned char charge_flash_count = CHARGE_FLASH_SPEED;
 	
 	// Stop watchdog timer
 	WDTCTL = WDTPW + WDTHOLD;
@@ -191,6 +259,9 @@ int main( void )
 					else next_state = MODE_BL;
 					P5OUT &= ~(LED_GEAR_ALL);
 					P5OUT |= LED_GEAR_2;
+					if ((switches & SW_MODE_B) && ((EVENT_SLOW_ACTIVE) || (EVENT_FORWARD_ACTIVE))) {
+						cruise_setpoint = motor_rpm; //update cruise setpoint
+					}
 					break;
 				case MODE_BH:
 				case MODE_DL: //DRIVE
@@ -413,9 +484,15 @@ int main( void )
 					motor_rpm = can.data.data_fp[0];
 					gauge_tach_update( motor_rpm );
 				}
+				else if (can.address == (MC_CAN_BASE + MC_V_VECTOR))
+				{
+					phase_voltage = (float) isqrt((unsigned long)(can.data.data_fp[0]*can.data.data_fp[0] + can.data.data_fp[1]*can.data.data_fp[1]));
+					//phase_voltage = can.data.data_fp[0];
+				}
 				else if (can.address == (MC_CAN_BASE + MC_I_VECTOR))
 				{
 					// Update regen status flags
+					phase_current = can.data.data_fp[0];
 					if (can.data.data_fp[0] < REGEN_THRESHOLD) EVENT_REGEN_SET;
 					else EVENT_REGEN_CLR;
 				}

@@ -35,19 +35,23 @@ To build:
 	
 To program the driver control box:
 	1) make sure DCB is powered and the CAN/ethernet bridge is connected to your computer
+		NOTE: The CAN bus must be powered from the CAN adapter (the thing the can-ethernet bridge plugs into) I have had a difficult time getting
+				the DCB to program if you are powering the CAN bus from another location. I have no idea why.
 	2) run triFwLoad_1_06.exe (it is included in this directory for convenience)
 	3) locate tr86_oldBL.tsf in this directory (the result of the build step)
 	4) Press erase/program. It may take a couple of tries for it to work
-		I have noticed that the DCB does not want to be discoverable over CAN unless it is powered off of a well-regulated
-		12V bus with not much interference. I couldn't get it to program on the car. I had to take the box upstairs to the bench in order to program it...
-		
+
 	Note: If programming doesn't work, then sometimes it works to go to "File->Manual Target Device"
 	
 	The serial number for our DCB is 4294967295
 	and the default CAN base address is 500
 =====================================================================================================================================================
 
-	
+Changes made to firmware on 5-01-16:
+	-- Improved cruise control algorithm to be less bang-bangy and actually hit the right setpoint
+	-- improved cruise control algorithm so you can update the speed setpoint by pressing the white button while in cruise
+	-- improved regen setpoint algorithm in pedal.c so that it doesn't over-current the battery box on regen but still allows
+		you to have as strong of a regen as possible.
 	
 Changes made to firmware on 12-9-15:
 	tri86.c -- simplified state machine to only include OFF,REVERSE,DRIVE,and CRUISE. Implements cruise control. 

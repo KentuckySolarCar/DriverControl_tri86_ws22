@@ -41,6 +41,10 @@ command_variables	command;
 
 extern float motor_rpm;
 extern float cruise_setpoint;
+extern float battery_voltage;
+extern float phase_voltage;
+extern float phase_current;
+
 
 /**************************************************************************************************
  * PUBLIC FUNCTIONS
@@ -54,6 +58,7 @@ extern float cruise_setpoint;
 void process_pedal( unsigned int analog_a, unsigned int analog_b, unsigned int analog_c, unsigned char request_regen )
 {
 	float pedal, regen, rpm;
+	static float regen_prev = 0;
 	
 	// Error Flag updates
 	// Pedal too low
@@ -75,6 +80,7 @@ void process_pedal( unsigned int analog_a, unsigned int analog_b, unsigned int a
 	// Run command calculations only if there are no pedal faults detected
 	if (command.flags == 0x00)
 	{
+		float max_regen = 1.0;
 		// Scale pedal input to a 0.0 to CURRENT_MAX range
 		// Clip lower travel region of pedal input
 		if (analog_a > PEDAL_TRAVEL_MIN) pedal = (analog_a - PEDAL_TRAVEL_MIN);
@@ -92,7 +98,19 @@ void process_pedal( unsigned int analog_a, unsigned int analog_b, unsigned int a
 		// Scale regen input
 		regen = regen * REGEN_MAX / REGEN_TRAVEL;
 		// Check limits and clip upper travel region
-		if (regen > REGEN_MAX) regen = REGEN_MAX;
+		//if (regen > REGEN_MAX) regen = REGEN_MAX;
+		max_regen = battery_voltage * MAX_REGEN_CURRENT / (MAX_PHASE_CURRENT * phase_voltage * 3 * MOTOR_EFFICIENCY);
+		//max_regen = 0.5; //388;//125.0 * MAX_REGEN_CURRENT / (MAX_PHASE_CURRENT * 27.0);
+		if(regen > max_regen)
+		{
+			regen = max_regen;
+		}
+		if(regen > 1.0) {regen = 1.0;}
+		if(regen < 0.0) {regen = 0.0;}
+		if(regen > regen_prev + 0.005){
+			regen = regen_prev + 0.005;
+		}
+		regen_prev = regen;
 		rpm = 0.0;
 #else
 		// Scale regen input to a 0.0 to RPM_MAX (direction dependent) range
@@ -149,10 +167,10 @@ void process_pedal( unsigned int analog_a, unsigned int analog_b, unsigned int a
 				{
 					if( pedal <= 0.1) {
 						if(motor_rpm < cruise_setpoint) {
-							command.current = CURRENT_MAX;
-							command.rpm = cruise_setpoint;
+							command.current = CURRENT_MAX / 4;
+							command.rpm = cruise_setpoint + 5;
 						} else {
-							command.current = 0.0;
+							command.current = CURRENT_MAX / 16;
 							command.rpm = cruise_setpoint;
 						}
 					} else {

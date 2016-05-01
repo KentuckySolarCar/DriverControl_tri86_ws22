@@ -40,6 +40,11 @@ typedef struct _command_variables {
 
 extern command_variables command;
 
+#define MAX_REGEN_CURRENT  (35)
+#define MAX_PHASE_CURRENT  (95)
+#define MOTOR_EFFICIENCY   (0.68)
+
+
 // Error flags
 #define FAULT_ACCEL_LOW			0x01
 #define FAULT_ACCEL_HIGH		0x02
@@ -49,7 +54,7 @@ extern command_variables command;
 
 // Command parameter limits
 #define CURRENT_MAX				1.0					// %, absolute value
-#define REGEN_MAX				0.2					// %, absolute value
+#define REGEN_MAX				0.97					// %, absolute value
 #define RPM_FWD_MAX				4200				// Forwards max speed, rpm
 #define RPM_REV_MAX				-1000				// Reverse max speed, rpm
 
