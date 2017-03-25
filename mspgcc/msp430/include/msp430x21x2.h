@@ -15,7 +15,7 @@
  * $Id: msp430x21x2.h,v 1.1 2008/10/09 15:00:13 sb-sf Exp $
  */
 
-#include <iomacros.h>
+//#include <iomacros.h>
 
 #define __MSP430_HAS_WDT__
 #define __MSP430_HAS_PORT1_R__
@@ -30,7 +30,7 @@
 #define __MSP430_HAS_ADC10__
 #define __MSP430_HAS_TLV__
 
-#include <msp430/basic_clock.h>
+/*#include <msp430/basic_clock.h>
 #include <msp430/flash.h>
 #include <msp430/eprom.h>
 #include <msp430/timera.h>
@@ -40,23 +40,23 @@
 #include <msp430/adc10.h>
 #include <msp430/tlv.h>
 
-#include <msp430/common.h>
+#include <msp430/common.h>*/
 
 #define IE1_                0x0000  /* Interrupt Enable 1 */
-sfrb(IE1,IE1_);
+//sfrb(IE1,IE1_);
 #define WDTIE               (1<<0)
 #define OFIE                (1<<1)
 #define NMIIE               (1<<4)
 #define ACCVIE              (1<<5)
 
 #define IFG1_               0x0002  /* Interrupt Flag 1 */
-sfrb(IFG1,IFG1_);
+//sfrb(IFG1,IFG1_);
 #define WDTIFG              (1<<0)
 #define OFIFG               (1<<1)
 #define NMIIFG              (1<<4)
 
 #define IE2_                0x0001  /* Interrupt Enable 2 */
-sfrb(IE2,IE2_);
+//sfrb(IE2,IE2_);
 #define UC0IE               IE2
 #define UCA0RXIE            (1<<0)
 #define UCA0TXIE            (1<<1)
@@ -64,7 +64,7 @@ sfrb(IE2,IE2_);
 #define UCB0TXIE            (1<<3)
 
 #define IFG2_               0x0003  /* Interrupt Flag 2 */
-sfrb(IFG2,IFG2_);
+//sfrb(IFG2,IFG2_);
 #define UC0IFG              IFG2
 #define UCA0RXIFG           (1<<0)
 #define UCA0TXIFG           (1<<1)
@@ -82,11 +82,10 @@ sfrb(IFG2,IFG2_);
 #define COMPARATORA_VECTOR  22      /* 0xFFF6 Comparator A */
 #define TIMER1_A1_VECTOR    24      /* 0xFFF8 Timer A1 CC1, TA */
 #define TIMER1_A0_VECTOR    26      /* 0xFFFA Timer A1 CC0 */
-#define NMI_VECTOR          28      /* 0xFFFC Non-maskable */ 
+#define NMI_VECTOR          28      /* 0xFFFC Non-maskable */
 
 #define BSLSKEY_         0xFFDE /* The address is used as bootstrap loader security key */
 #define BSLSKEY_DISABLE  0xAA55 /* Disables the BSL completely */
 #define BSLSKEY_NO_ERASE 0x0000 /* Disables the erasure of the flash if an invalid password is supplied */
 
 #endif /* #ifndef __msp430x21x2 */
-

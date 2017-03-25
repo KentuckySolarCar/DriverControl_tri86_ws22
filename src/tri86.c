@@ -2,26 +2,26 @@
  * Tritium TRI86 EV Driver Controls, up to v4 hardware
  * Copyright (c) 2015, Tritium Pty Ltd.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without modification, 
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *  - Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
- *	- Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer 
+ *	- Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer
  *	  in the documentation and/or other materials provided with the distribution.
- *	- Neither the name of Tritium Pty Ltd nor the names of its contributors may be used to endorse or promote products 
+ *	- Neither the name of Tritium Pty Ltd nor the names of its contributors may be used to endorse or promote products
  *	  derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
  * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
- * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
- * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, 
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
- * OF SUCH DAMAGE. 
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+ * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+ * OF SUCH DAMAGE.
  *
  */
 
 // Include files
-#include <msp430x24x.h>
+//#include <msp430x24x.h>
 #include <signal.h>
 //#include <math.h> //DC
 #include "tri86.h"
@@ -127,7 +127,7 @@ unsigned long isqrt(unsigned long ulValue)
 
 // Main routine
 int main( void )
-{ 
+{
 	// Local variables
 	// State machine variables
 	unsigned char next_state = MODE_OFF;
@@ -136,27 +136,27 @@ int main( void )
 	unsigned int comms_event_count = 0;
 	// LED flashing
 	//unsigned char charge_flash_count = CHARGE_FLASH_SPEED;
-	
+
 	// Stop watchdog timer
 	WDTCTL = WDTPW + WDTHOLD;
 
 	// Initialise I/O ports
-	io_init();
+	//io_init();
 
 	// Initialise clock module - internal osciallator
-	clock_init();
+	//clock_init();
 
 	// Fetch hardware info
-	variant_retreive_hware();
+	//variant_retreive_hware();
 
 	// Set up flash timing
-	flash_init();
+	//flash_init();
 
 	// Read in constants from flash
-	flash_read((unsigned char *)(&flash), sizeof(flash));
+	//flash_read((unsigned char *)(&flash), sizeof(flash));
 
 	// Check if flash has been programmed, if not, switch to calibration mode - this will send raw ADC counts
-	if ((flash.serial == 0xFFFFFFFF) || (flash.serial == 0x00000000) || (flash.can_id > 0x07E0))
+	/*if ((flash.serial == 0xFFFFFFFF) || (flash.serial == 0x00000000) || (flash.can_id > 0x07E0))
 	{
 		can_addr = flash.can_id = DC_CAN_BASE;
 		flash.can_bitrate = CAN_BITRATE_500;
@@ -164,52 +164,54 @@ int main( void )
 	else
 	{
 		can_addr = flash.can_id;
-	}
+	}*/
 
 	// Initialise SPI port for CAN controller (running with SMCLK)
-	usci_init(0);
-	
+	//usci_init(0);
+
 	// Reset CAN controller and initialise
 	// This also changes the clock output from the MCP2515, but we're not using it in this software
-	can_init( flash.can_bitrate );
+	//can_init( flash.can_bitrate );
 	EVENT_CONNECTED_SET;
 
 	// Initialise Timer A (10ms timing ticks)
-	timerA_init();
+	//timerA_init();
 
 	// Initialise Timer B (gauge outputs PWM / pulses)
-	timerB_init();
-  
+	//timerB_init();
+
 	// Initialise A/D converter for potentiometer and current sense inputs
-	adc_init();
+	//adc_init();
 
 	// Initialise switch positions
-	switch_init( &switches );
-	
+	//switch_init( &switches );
+
 	// Initialise command state
 	command.rpm = 0.0;
 	command.current = 0.0;
 	command.bus_current = 1.0;
 	command.flags = 0x00;
 	command.state = MODE_OFF;
-	
+
 	// Init gauges
 	gauge_init();
 
 	// Enable interrupts
-	eint();
+	//eint();
 
 	// Check switch inputs and generate command packets to motor controller
 	while (TRUE)
 	{
 		// Process CAN transmit queue
-		can_transmit();
+    // REWRITE WITH TEENSY
+    //can_transmit();
 
 		// Trigger ADC conversions (100Hz)
-		if ( EVENT_TIMER_ACTIVE )
+    // REWRITE WITH TEENSY
+    if ( EVENT_TIMER_ACTIVE )
 		{
 			// Clear flag
-			EVENT_TIMER_CLR;			
+			EVENT_TIMER_CLR;
 			// Start A/D conversions
 			ADC12CTL0 |= ADC12SC;
 		}
@@ -225,14 +227,14 @@ int main( void )
 			// TODO
 			// Update motor commands based on pedal and slider positions
 #ifdef REGEN_ON_BRAKE
-			process_pedal( ADC12MEM0, ADC12MEM1, ADC12MEM2, TRUE ); //always request regen, but the last argument no longer matters (DC 12-8-15) 
+			process_pedal( ADC12MEM0, ADC12MEM1, ADC12MEM2, TRUE ); //always request regen, but the last argument no longer matters (DC 12-8-15)
 			//process_pedal( ADC12MEM0, ADC12MEM1, ADC12MEM2, (switches & SW_BRAKE) );// Request regen on brake switch
 #else
 			process_pedal( ADC12MEM0, ADC12MEM1, ADC12MEM2, FALSE );					// No regen
-#endif			
+#endif
 			// Update current state of the switch inputs
 			switch_update( &switches );
-			
+
 			// Track current operating state
 			switch(command.state)
 			{
@@ -281,15 +283,15 @@ int main( void )
 					break;
 			}
 			command.state = next_state;
-			
+
 			// Control brake lights
-			if ((switches & SW_BRAKE) || (EVENT_REGEN_ACTIVE)) P1OUT |= BRAKE_OUT;
-			else P1OUT &= ~BRAKE_OUT;
-			
+			//if ((switches & SW_BRAKE) || (EVENT_REGEN_ACTIVE)) P1OUT |= BRAKE_OUT;
+			//else P1OUT &= ~BRAKE_OUT;
+
 			// Control reversing lights
 			if (command.state == MODE_R) P1OUT |= REVERSE_OUT;
 			else P1OUT &= ~REVERSE_OUT;
-			
+
 			// Control CAN bus power
 			//(DC 12-8-15) -- we don't want can power to be dependent on anything
 			//if ((switches & SW_IGN_ACC) || (switches & SW_IGN_ON) || (switches & SW_FUEL))
@@ -311,13 +313,13 @@ int main( void )
 
 			// Control gear switch backlighting
 			//(DC 12-8-15) -- we always want LEDS enabled
-			//if ((switches & SW_IGN_ACC) || (switches & SW_IGN_ON)) 
+			//if ((switches & SW_IGN_ACC) || (switches & SW_IGN_ON))
 			P5OUT |= LED_GEAR_BL;
 			//else P5OUT &= ~LED_GEAR_BL;
-			
+
 			// Control front panel fault indicator
 			if (switches & (SW_ACCEL_FAULT | SW_CAN_FAULT | SW_BRAKE_FAULT | SW_REV_FAULT)) P3OUT &= ~LED_REDn;
-			else P3OUT |= LED_REDn;			
+			else P3OUT |= LED_REDn;
 		}
 
 		// Handle outgoing communications events
@@ -336,15 +338,15 @@ int main( void )
 				can_push_ptr->status = 8;
 				can_push_ptr->data.data_fp[1] = command.current;
 				can_push_ptr->data.data_fp[0] = command.rpm;
-				can_push();		
-	
+				can_push();
+
 				// Transmit bus command frame
 				can_push_ptr->address = can_addr + DC_POWER;
 				can_push_ptr->status = 8;
 				can_push_ptr->data.data_fp[1] = command.bus_current;
 				can_push_ptr->data.data_fp[0] = 0.0;
 				can_push();
-				
+
 				// Transmit switch position/activity frame and clear switch differences variables
 				can_push_ptr->address = can_addr + DC_SWITCH;
 				can_push_ptr->status = 8;
@@ -414,7 +416,7 @@ int main( void )
 					can_push();
 				}
 #endif
-				
+
 				// Transmit our ID frame at a slower rate (every 10 events = 1/second)
 				comms_event_count++;
 				if (comms_event_count == 10)
@@ -423,9 +425,9 @@ int main( void )
 					can_push_ptr->address = can_addr;
 					can_push_ptr->status = 8;
 					//NB: THESE WERE THE WRONG WAY... ALL TRITIUM DEVICES MUST HAVE DEVICE_ID IN LOWER 32BIT VALUE
-					can_push_ptr->data.data_u32[0] = hware.device_id;		// Device ID 
+					can_push_ptr->data.data_u32[0] = hware.device_id;		// Device ID
 					can_push_ptr->data.data_u32[1] = flash.serial;			// Serial number
-					can_push();		
+					can_push();
 				}
 			}
 		}
@@ -460,7 +462,7 @@ int main( void )
 						dint();
 						// Disable used peripheral interrupts (If new user code enables master interrupts these may trip an erroneous interrupt call if not implemented)
 						ADC12IE = 0;
-						TACCTL0 = 0;								
+						TACCTL0 = 0;
 						TBCCTL0 = 0;
 						//BL requires that the WD flag in IFG1 is cleared
 						__asm__ __volatile__ ("bic.b %0,&__IFG1" : : "i" (WDTIFG));
@@ -553,7 +555,7 @@ int main( void )
 								flash_write((unsigned char *)(&flash), sizeof(flash));
 								eint();
 								// Force a reset of the part, to come back up in operating mode
-								WDTCTL = 0x00;	
+								WDTCTL = 0x00;
 								break;
 							default:
 								break;
@@ -647,7 +649,7 @@ int main( void )
 			//}
 		}
 	}
-	
+
 	// Will never get here, keeps compiler happy
 	return(1);
 }
@@ -678,19 +680,19 @@ void io_init( void )
 {
 	P1OUT = 0x00;
 	P1DIR = BRAKE_OUT | REVERSE_OUT | CAN_PWR_OUT | P1_UNUSED;
-	
+
 	P2OUT = 0x00;
 	P2DIR = P2_UNUSED;
-	
+
 	P3OUT = CAN_CSn | EXPANSION_TXD | LED_REDn | LED_GREENn;
 	P3DIR = CAN_CSn | CAN_MOSI | CAN_SCLK | EXPANSION_TXD | LED_REDn | LED_GREENn | P3_UNUSED;
-	
+
 	P4OUT = LED_PWM;
 	P4DIR = GAUGE_1_OUT | GAUGE_2_OUT | GAUGE_3_OUT | GAUGE_4_OUT | LED_PWM | P4_UNUSED;
-	
+
 	P5OUT = 0x00;
 	P5DIR = LED_FAULT_1 | LED_FAULT_2 | LED_FAULT_3 | LED_GEAR_BL | LED_GEAR_4 | LED_GEAR_3 | LED_GEAR_2 | LED_GEAR_1 | P5_UNUSED;
-	
+
 	P6OUT = 0x00;
 	P6DIR = ANLG_V_ENABLE | P6_UNUSED;
 }
@@ -734,10 +736,10 @@ void timerB_init( void )
  */
 void adc_init( void )
 {
-	// Enable A/D input channels											
+	// Enable A/D input channels
 	P6SEL |= ANLG_SENSE_A | ANLG_SENSE_B | ANLG_SENSE_C | ANLG_SENSE_V | ANLG_BRAKE_I | ANLG_REVERSE_I | ANLG_CAN_PWR_I;
 	// Turn on ADC12, set sampling time = 256 ADCCLK, multiple conv, start internal 2.5V reference
-	ADC12CTL0 = ADC12ON | SHT0_8 | SHT1_8 | MSC | REFON | REF2_5V;	
+	ADC12CTL0 = ADC12ON | SHT0_8 | SHT1_8 | MSC | REFON | REF2_5V;
 	// Use sampling timer, ADCCLK = MCLK/4, run a single sequence per conversion start
 	ADC12CTL1 = ADC12SSEL_2 | ADC12DIV_3 | SHP | CONSEQ_1;
 	// Map conversion channels to input channels & reference voltages
@@ -749,9 +751,9 @@ void adc_init( void )
 	ADC12MCTL5 = INCH_6 | SREF_1;			// Reverse light current
 	ADC12MCTL6 = INCH_7 | SREF_1 | EOS;		// CAN Bus current / End of sequence
 	// Enable interrupts on final conversion in sequence
-	ADC12IE = BIT6;	
+	ADC12IE = BIT6;
 	// Enable conversions
-	ADC12CTL0 |= ENC;											
+	ADC12CTL0 |= ENC;
 }
 
 /*
@@ -763,7 +765,7 @@ interrupt(TIMERB0_VECTOR) timer_b0(void)
 	static unsigned int gauge_count;
 	static unsigned int gauge1_on, gauge1_off;
 	static unsigned int gauge2_on, gauge2_off;
-	
+
 	// Toggle gauge 1 & 2 pulse frequency outputs
 	if (gauge_count == gauge1_on)
 	{
@@ -789,7 +791,7 @@ interrupt(TIMERB0_VECTOR) timer_b0(void)
 
 	// Update pulse output timebase counter
 	gauge_count++;
-	
+
 	// Update outputs if necessary
 	if (EVENT_GAUGE1_ACTIVE)
 	{
@@ -802,13 +804,13 @@ interrupt(TIMERB0_VECTOR) timer_b0(void)
 	if (EVENT_GAUGE3_ACTIVE)
 	{
 		EVENT_GAUGE3_CLR;
-		TBCCR3 = gauge.g3_duty;		
+		TBCCR3 = gauge.g3_duty;
 	}
 	if (EVENT_GAUGE4_ACTIVE)
 	{
 		EVENT_GAUGE4_CLR;
-		TBCCR4 = gauge.g4_duty;		
-	}	
+		TBCCR4 = gauge.g4_duty;
+	}
 }
 
 /*
@@ -820,10 +822,10 @@ interrupt(TIMERA0_VECTOR) timer_a0(void)
 {
 	static unsigned char comms_count = COMMS_SPEED;
 	static unsigned char activity_count;
-	
+
 	// Trigger timer based events
 	EVENT_TIMER_SET;
-	
+
 	// Trigger comms events (command packet transmission)
 	comms_count--;
 	if ( comms_count == 0 )
@@ -831,7 +833,7 @@ interrupt(TIMERA0_VECTOR) timer_a0(void)
 		comms_count = COMMS_SPEED;
 		EVENT_COMMS_SET;
 	}
-	
+
 	// Check for CAN activity events and blink LED
 	if (EVENT_CAN_ACTIVITY_ACTIVE)
 	{

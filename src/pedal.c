@@ -2,21 +2,21 @@
  * Tritium pedal Interface
  * Copyright (c) 2015, Tritium Pty Ltd.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without modification, 
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *  - Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
- *	- Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer 
+ *	- Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer
  *	  in the documentation and/or other materials provided with the distribution.
- *	- Neither the name of Tritium Pty Ltd nor the names of its contributors may be used to endorse or promote products 
+ *	- Neither the name of Tritium Pty Ltd nor the names of its contributors may be used to endorse or promote products
  *	  derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
  * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
- * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
- * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, 
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
- * OF SUCH DAMAGE. 
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+ * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+ * OF SUCH DAMAGE.
  *
  * - Generates target motor rpm and current setpoints
  * - Inputs:
@@ -32,9 +32,9 @@
  */
 
 // Include files
-#include <msp430x24x.h>
-#include "tri86.h"
-#include "pedal.h"
+//#include "../mspgcc/msp430/include/msp430x21x2.h"
+#include "../include/tri86.h"
+#include "../include/pedal.h"
 
 // Public variables
 command_variables	command;
@@ -59,7 +59,7 @@ void process_pedal( unsigned int analog_a, unsigned int analog_b, unsigned int a
 {
 	float pedal, regen, rpm;
 	static float regen_prev = 0;
-	
+
 	// Error Flag updates
 	// Pedal too low
 	if (analog_a < PEDAL_ERROR_MIN) command.flags |= FAULT_ACCEL_LOW;
@@ -75,8 +75,8 @@ void process_pedal( unsigned int analog_a, unsigned int analog_b, unsigned int a
 	// Pedal too high
 	if (analog_c > REGEN_ERROR_MAX) command.flags |= FAULT_REGEN_HIGH;
 	else command.flags &= ~FAULT_REGEN_HIGH;
-	
-	
+
+
 	// Run command calculations only if there are no pedal faults detected
 	if (command.flags == 0x00)
 	{
@@ -130,7 +130,7 @@ void process_pedal( unsigned int analog_a, unsigned int analog_b, unsigned int a
 		}
 		regen = 0.0;
 #endif
-		
+
 #ifndef REGEN_SETS_RPM
 		// Choose target motor velocity
 		switch(command.state)
@@ -163,17 +163,35 @@ void process_pedal( unsigned int analog_a, unsigned int analog_b, unsigned int a
 				break;
 			case MODE_DH:
 			case MODE_BL: //CRUISE
-				if ( regen <= 0.0 )
+				if (regen <= 0.0)
 				{
-					if( pedal <= 0.1) {
-						if(motor_rpm < cruise_setpoint) {
-							command.current = CURRENT_MAX / 4;
-							command.rpm = cruise_setpoint + 5;
-						} else {
-							command.current = CURRENT_MAX / 16;
-							command.rpm = cruise_setpoint;
+					if (pedal <= 0.1)
+					{
+						if (motor_rpm < cruise_setpoint)
+						{
+							//the go faster part, also check to make sure you don't accidentally the whole current
+							if ((K_P * (cruise_setpoint - motor_rpm) + phase_current) <= CURRENT_MAX)
+							{
+								command.current = K_P * (cruise_setpoint - motor_rpm) + phase_current;
+								command.rpm = motor_rpm + (cruise_setpoint - motor_rpm);
+							}
+							else
+							{
+								command.current = CURRENT_MAX;
+								command.rpm = RPM_FWD_MAX;
+							}
 						}
-					} else {
+						// Slow down a little
+						// motor_rpm > cruise_setpoint
+						else
+						{
+							command.current = K_P * (motor_rpm - cruise_setpoint) + phase_current;
+							command.rpm = motor_rpm - (motor_rpm - cruise_setpoint);
+						}
+					}
+					else
+					{
+						//pedal is down so you don't have a care in the world
 						command.current = pedal;
 						command.rpm = RPM_FWD_MAX;
 					}
@@ -181,8 +199,9 @@ void process_pedal( unsigned int analog_a, unsigned int analog_b, unsigned int a
 				else
 				{
 					command.current = regen;
-					command.rpm = 0.0;
+				command.rpm = 0.0;
 				}
+				// K_P needs to be defined as 0.9 somewhere as well
 				break;
 			case MODE_BH:
 			case MODE_CHARGE:
