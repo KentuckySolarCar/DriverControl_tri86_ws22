@@ -43,7 +43,14 @@ extern command_variables command;
 #define MAX_REGEN_CURRENT		(35)
 #define MAX_PHASE_CURRENT		(95)
 #define MOTOR_EFFICIENCY		(0.68)
-#define K_P									(0.9)
+#define K_E									(0.9)
+#define K_I									(0.9)
+#define K_D									(0.9)
+#define old_rpm							(0.0)
+#define error								(0.0)
+#define deriv 							(0.0)
+#define intergral						(0.0)
+#define interval						(0.2)
 
 // Error flags
 #define FAULT_ACCEL_LOW			0x01

@@ -167,26 +167,24 @@ void process_pedal( unsigned int analog_a, unsigned int analog_b, unsigned int a
 				{
 					if (pedal <= 0.1)
 					{
-						if (motor_rpm < cruise_setpoint)
+						if (motor_rpm != cruise_setpoint)
 						{
-							//the go faster part, also check to make sure you don't accidentally the whole current
-							if ((K_P * (cruise_setpoint - motor_rpm) + phase_current) <= CURRENT_MAX)
+							error = K_E*(cruise_setpoint - motor_rpm);
+							intergral = K_I*((intergral + error)*(interval);
+							deriv = K_D*((motor_rpm - old_rpm)/(interal);
+							//he go faster part, also check to make sure you don't accidentally the whole current
+							if (error + intergral + deriv < RPM_FWD_MAX)
 							{
-								command.current = K_P * (cruise_setpoint - motor_rpm) + phase_current;
-								command.rpm = motor_rpm + (cruise_setpoint - motor_rpm);
+								command.current = CURRENT_MAX;
+								command.rpm = error + integral + deriv;
+								//command.current = K_P * (cruise_setpoint - motor_rpm) + phase_current;
+								//command.rpm = motor_rpm + (cruise_setpoint - motor_rpm);
 							}
 							else
 							{
 								command.current = CURRENT_MAX;
 								command.rpm = RPM_FWD_MAX;
 							}
-						}
-						// Slow down a little
-						// motor_rpm > cruise_setpoint
-						else
-						{
-							command.current = K_P * (motor_rpm - cruise_setpoint) + phase_current;
-							command.rpm = motor_rpm - (motor_rpm - cruise_setpoint);
 						}
 					}
 					else
@@ -199,9 +197,10 @@ void process_pedal( unsigned int analog_a, unsigned int analog_b, unsigned int a
 				else
 				{
 					command.current = regen;
-				command.rpm = 0.0;
+					command.rpm = 0.0;
 				}
-				// K_P needs to be defined as 0.9 somewhere as well
+				old_rpm = motor_rpm;
+				old_time = now();
 				break;
 			case MODE_BH:
 			case MODE_CHARGE:
